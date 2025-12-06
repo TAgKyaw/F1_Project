@@ -1,0 +1,6 @@
+data/bronze/
+data/silver/
+data/gold/
+scripts/__pycache__
+.venv
+notebooks

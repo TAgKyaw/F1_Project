@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  f1_pipeline:
+    image: f1_pipeline        # the Docker image you already built
+    container_name: f1_pipeline_container
+    volumes:
+      - ./data:/app/data      # mount local data folder
+      - ./scripts:/app/scripts  # mount local scripts folder
+    working_dir: /app
+    command: python scripts/pipeline.py
+    tty: true                 # keeps the container interactive for logs

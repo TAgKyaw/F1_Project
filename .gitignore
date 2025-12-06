@@ -1,0 +1,9 @@
+.venv
+# Data folders
+data/bronze/
+data/silver/
+data/gold/
+notebooks
+scripts/__pycache__
+imgs
+notes.txt
