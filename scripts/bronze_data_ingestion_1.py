@@ -1,14 +1,14 @@
 # imports 
 import pandas as pd
 from pathlib import Path
-from config import BRONZE_PATH, GLOBAL_DATA_PATH
+from config import BRONZE_PATH, F1_PATH
 
-constructor_standings_2024 = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_2024_constructor_standings.csv')
-driver_standings_2024 = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_2024_driver_standings.csv')
-race_results_2024 = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_2024_race_results.csv')
-circuits_metadata = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_circuits_metadata.csv')
-historical_drivers = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_historical_drivers.csv')
-qualifying_results_2024 = pd.read_csv(f'{GLOBAL_DATA_PATH}/f1_qualifying_results_2024.csv')
+constructor_standings_2024 = pd.read_csv(f'{F1_PATH}/f1_2024_constructor_standings.csv')
+driver_standings_2024 = pd.read_csv(f'{F1_PATH}/f1_2024_driver_standings.csv')
+race_results_2024 = pd.read_csv(f'{F1_PATH}/f1_2024_race_results.csv')
+circuits_metadata = pd.read_csv(f'{F1_PATH}/f1_circuits_metadata.csv')
+historical_drivers = pd.read_csv(f'{F1_PATH}/f1_historical_drivers.csv')
+qualifying_results_2024 = pd.read_csv(f'{F1_PATH}/f1_qualifying_results_2024.csv')
 
 # dataset dictionary
 
