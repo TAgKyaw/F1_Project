@@ -6,7 +6,7 @@
 # Imports and Setups
 import pandas as pd
 from pathlib import Path
-from config import BRONZE_PATH, SILVER_PATH, GOLD_PATH
+from config import SILVER_PATH, GOLD_PATH
 
 # Create gold directory at project root if it doesn't exist
 Path(GOLD_PATH).mkdir(parents=True, exist_ok=True)
@@ -18,6 +18,30 @@ def load_silver(name):
     except (ImportError, FileNotFoundError):
         print(f"Parquet not available for {name}, loading CSV.")
         return pd.read_csv(f"{SILVER_PATH}/{name}.csv")
+
+# SAVING TO GOLD LAYER
+def save_to_gold(master_table):
+    try:
+        master_table.to_parquet(f"{GOLD_PATH}/master_table.parquet", index=False)
+        print("✅ Master table saved as Parquet to data/gold/")
+    except ImportError:
+        print("Parquet not available. Saving as CSV instead.")
+        master_table.to_csv(f"{GOLD_PATH}/master_table.csv", index=False)
+
+# Row validation for explosions
+def df_shapes(main, merged):
+    # Final Row Validation
+    # Checking if any one-to-many explosions
+    # Checking if any accidental Cartesian joins
+    expected_rows = main.shape[0] # race_results - > the main backbone table
+    actual_rows = merged.shape[0] # master_table - > Merged with all tables
+    print("Expected Rows:", expected_rows)
+    print("Actual Rows After All Joins:", actual_rows)
+
+    if expected_rows != actual_rows:
+        print("⚠️ WARNING: Row count mismatch! Possible join explosion.")
+    else:
+        print("✅ Row count is correct. No duplication detected.")
 
 # All Functions ended ============================================
 
@@ -117,50 +141,36 @@ master_table = master_table.merge(
 )
 
 print("After Historical Drivers Merge:", master_table.shape)
-
 # Adds: experience, career win rate, championship count
-
 # Static background info → safe global merge
 # Output: After Historical Drivers Merge: (480, 81)
 
 # All MERGING COMPLETED ====================================
 
-# POST-MERGE VALIDATION:ROW CHECKS
-# Final Row Validation
-# Checking if any one-to-many explosions
-# Checking if any accidental Cartesian joins
+# Adding is_podium for Feature Engineering and Gold EDA
+master_table["is_podium"] = (master_table["position"] <= 3).astype(int)
+print("Is_Podium")
+print(master_table["is_podium"].head(3))
 
-expected_rows = race_results.shape[0]
-actual_rows = master_table.shape[0]
+# ======== POST-MERGE VALIDATION:ROW CHECKS =============================
 
-print("Expected Rows:", expected_rows)
-print("Actual Rows After All Joins:", actual_rows)
-
-if expected_rows != actual_rows:
-    print("⚠️ WARNING: Row count mismatch! Possible join explosion.")
-else:
-    print("✅ Row count is correct. No duplication detected.")
+# Remove rows with missing "position"
+master_table = master_table.dropna(subset=["position"])
+df_shapes(race_results, master_table)
 # Output:
-# Expected Rows: 480
-# Actual Rows After All Joins: 480
-# ✅ Row count is correct. No duplication detected.
+    # Expected Rows: 480
+    # Actual Rows After All Joins: 480
+    # ✅ Row count is correct. No duplication detected.
 
-# FEATURE REVIEW
+# ======== FEATURE REVIEW ===============================================
 
 # Quick Column Review
 print(master_table.columns.tolist())
-
 # All of the Race features, Qualifying features, Circuit features, Driver season features,
 # Constructor features, and Career features
 
-# SAVING TO GOLD LAYER
-
-try:
-    master_table.to_parquet(f"{GOLD_PATH}/master_table.parquet", index=False)
-    print("✅ Master table saved as Parquet to data/gold/")
-except ImportError:
-    print("Parquet not available. Saving as CSV instead.")
-    master_table.to_csv(f"{GOLD_PATH}/master_table.csv", index=False)
+# Saving the final validated masters data to gold folder for EDA and Feature Engineering
+save_to_gold(master_table)
 
 # -------------------------------------------------------------
 
