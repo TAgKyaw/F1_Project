@@ -1,3 +1,3 @@
 # Formula One End-to-End Data & Machine Learning Project
 
-This is an end-to-end project using F1 dataset dated to 2024 from sourcing, processing, wrangling data and engineering features and implement machine learning algorithms to predict results such as predicting drivers' win rates, perfomances, etc. The updated add-on of this project will be the containerization and automating processing scripts using DAGs where appropriate. Further modules to add into the project scope are to build a full interactive system for end users to be able to view the data files, view visualisations and ML results and filter analyses on screen without hard coding.
+This is an end-to-end project using F1 dataset dated to 2024 from sourcing, processing, wrangling data and engineering features and implement machine learning algorithms to predict results such as predicting drivers' win rates, perfomances, etc.
