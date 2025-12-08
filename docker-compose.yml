@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   f1_pipeline:
-    image: f1_pipeline        # the Docker image you already built
+    image: f1_data_pipeline        # the Docker image you already built
     container_name: f1_pipeline_container
     volumes:
       - ./data:/app/data      # mount local data folder
