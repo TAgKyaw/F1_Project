@@ -128,3 +128,10 @@ numeric_df = master.select_dtypes(include=["int64", "float64"])
 corr = numeric_df.corr()
 
 print(corr["position"].sort_values())
+
+# Target Distribution Check 
+
+print("Target distribution:")
+print(master["is_podium"].value_counts())
+print("\nPercentages:")
+print(master["is_podium"].value_counts(normalize=True) * 100)
