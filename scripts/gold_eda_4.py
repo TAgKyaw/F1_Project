@@ -87,7 +87,7 @@ driver_summary = (
     .sort_values("avg_finish")
 )
 
-print(driver_summary.head(10))
+# print(driver_summary.head(10))
 
 # Constructor Strength Overview
 constructor_summary = (
@@ -100,7 +100,7 @@ constructor_summary = (
     .sort_values("avg_points", ascending=False)
 )
 
-print(constructor_summary)
+# print(constructor_summary)
 
 # Circuit Difficulty Overview
 # Idenifies: Easy overtaking tracks, and Processional Circuits
@@ -115,7 +115,7 @@ circuit_summary = (
     .sort_values("avg_overtakes", ascending=False)
 )
 
-print(circuit_summary)
+# print(circuit_summary)
 
 #### Correlation Scan (Numerical Only)
 
@@ -127,7 +127,7 @@ print(circuit_summary)
 numeric_df = master.select_dtypes(include=["int64", "float64"])
 corr = numeric_df.corr()
 
-print(corr["position"].sort_values())
+# print(corr["position"].sort_values())
 
 # Target Distribution Check 
 
@@ -135,3 +135,21 @@ print("Target distribution:")
 print(master["is_podium"].value_counts())
 print("\nPercentages:")
 print(master["is_podium"].value_counts(normalize=True) * 100)
+
+numeric_cols = master.select_dtypes(include=["int64", "float64"]).columns
+corr = master[numeric_cols].corr()["is_podium"].sort_values(ascending=False)
+
+print("Correlation with is_podium:\n")
+print(corr)
+
+from sklearn.feature_selection import mutual_info_classif
+
+X = master[numeric_cols].drop(columns=["is_podium"], errors="ignore")
+y = master["is_podium"]
+
+mi = mutual_info_classif(X.fillna(0), y, discrete_features=False)
+mi_scores = pd.Series(mi, index=X.columns).sort_values(ascending=False)
+
+print("\nMutual Information scores:")
+print(mi_scores)
+
