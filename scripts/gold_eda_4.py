@@ -144,7 +144,7 @@ print(corr)
 
 from sklearn.feature_selection import mutual_info_classif
 
-X = master[numeric_cols].drop(columns=["is_podium"], errors="ignore")
+X = master[numeric_cols].drop(columns=["is_podium", "position"], errors="ignore")
 y = master["is_podium"]
 
 mi = mutual_info_classif(X.fillna(0), y, discrete_features=False)
@@ -152,4 +152,7 @@ mi_scores = pd.Series(mi, index=X.columns).sort_values(ascending=False)
 
 print("\nMutual Information scores:")
 print(mi_scores)
+
+print("Number of unique keys for master")
+print(master.nunique().sort_values(ascending=False))
 
