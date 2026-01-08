@@ -1,18 +1,25 @@
-# DATA PROCESSING
-
-# Datasets from the silver layer will now be merged for data engineering 
-# and save in the gold layer.
+# SILVER TO GOLD: MASTER MERGE
+# ----------------------------
+# GOAL: Create a single "Master Table" by joining all Silver layer tables.
+# ANALYSIS:
+#   1. Uses `race_results` as the backbone (grain: 1 row = 1 driver per race).
+#   2. Left joins context tables (Qualifying, Circuits, Standings, History).
+#   3. Validates row counts to ensure no "join explosions" (duplication).
+# OUTPUT: `data/gold/master_table.parquet` (The core dataset for all ML/EDA).
 
 # Imports and Setups
 import pandas as pd
 from pathlib import Path
 from config import SILVER_PATH, GOLD_PATH
 
+# 1. SETUP & UTILS
+# ----------------
 # Create gold directory at project root if it doesn't exist
 Path(GOLD_PATH).mkdir(parents=True, exist_ok=True)
 
 # Load Silver datasets (Parquet with CSV Callback)
 def load_silver(name):
+    """Load parquet or csv from Silver layer."""
     try:
         return pd.read_parquet(f"{SILVER_PATH}/{name}.parquet")
     except (ImportError, FileNotFoundError):
@@ -21,15 +28,20 @@ def load_silver(name):
 
 # SAVING TO GOLD LAYER
 def save_to_gold(master_table):
+    """Save valid master table to Gold layer."""
     try:
         master_table.to_parquet(f"{GOLD_PATH}/master_table.parquet", index=False)
-        print("✅ Master table saved as Parquet to data/gold/")
+        print("Master table saved as Parquet to data/gold/")
     except ImportError:
         print("Parquet not available. Saving as CSV instead.")
         master_table.to_csv(f"{GOLD_PATH}/master_table.csv", index=False)
 
 # Row validation for explosions
 def df_shapes(main, merged):
+    """
+    Check if the merge altered the row count unexpectedly.
+    Main Grain: Race Results (1 driver per race).
+    """
     # Final Row Validation
     # Checking if any one-to-many explosions
     # Checking if any accidental Cartesian joins
@@ -39,12 +51,14 @@ def df_shapes(main, merged):
     print("Actual Rows After All Joins:", actual_rows)
 
     if expected_rows != actual_rows:
-        print("⚠️ WARNING: Row count mismatch! Possible join explosion.")
+        print("WARNING: Row count mismatch! Possible join explosion.")
     else:
-        print("✅ Row count is correct. No duplication detected.")
+        print("Row count is correct. No duplication detected.")
 
 # All Functions ended ============================================
 
+# 2. LOAD SILVER DATA
+# -------------------
 race_results = load_silver("race_results")
 qualifying_results = load_silver("qualifying_results")
 driver_standings = load_silver("driver_standings")
@@ -67,7 +81,8 @@ print("Historical Drivers Shape:", historical_drivers.shape)
 # Circuits Metadata Shape: (24, 14)
 # Historical Drivers Shape: (30, 16)
 
-# MASTER MERGE FUNCTION BEGINS HERE =================================
+# 3. MASTER MERGE EXECUTION
+# -------------------------
 
 # Base Table (Race Results = Backbone)
 # Check in documentation why it is a backbone table
@@ -184,7 +199,7 @@ save_to_gold(master_table)
 # 4. Team strength
 # 5. Career experience
 
-## ✅ Master Data Model is now validated and operational.
+# Master Data Model is now validated and operational.
 ### This Model is available for:
 # # TRUE EDA, # Feature Engineering, and # ML 
 ### ----------------------------------------- ###

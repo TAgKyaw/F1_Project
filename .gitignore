@@ -5,6 +5,5 @@ data/silver/
 data/gold/
 notebooks
 scripts/__pycache__
-imgs
 notes.txt
 .env

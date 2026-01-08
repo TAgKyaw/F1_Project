@@ -1,11 +1,12 @@
 """
-pipeline.py
-------------
-Runs the full F1 Data Pipeline:
-1. Bronze Data Ingestion
-2. Bronze → Silver Transformation
-3. Silver → Gold Master Merge
-4. Gold Layer EDA
+MAIN PIPELINE ORCHESTRATOR
+--------------------------
+GOAL: Run the end-to-end data processing flow (Bronze -> Silver -> Gold).
+LOGIC:
+    1. Ingestion: Raw CSVs -> Bronze Parquet
+    2. Transformation: Standardize Schema -> Silver Parquet
+    3. Merging: Join all tables -> Gold Master Table
+    4. Validation: Run initial EDA check.
 """
 
 import subprocess

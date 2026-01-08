@@ -1,6 +1,12 @@
-# MASTER DATA EDA
-# EDA WTIH CONTEXT - ENGINEERING EDA
-# NOT TRUE EDA YET FOR DATA ANALYSIS
+# GOLD LAYER EDA (DATA HEALTH CHECK)
+# ----------------------------------
+# GOAL: Perform initial sanity checks on the merged "Master Table".
+# ANALYSIS:
+#   1. Missing value assessment.
+#   2. Primary key uniqueness validation (One record per driver per race).
+#   3. Domain sanity checks (Position range 1-20, etc.).
+#   4. Target variable distribution (Podium vs Non-Podium).
+# OUTPUT: Console prints reporting the health and structure of the dataset.
 
 from config import GOLD_PATH
 import pandas as pd
@@ -11,7 +17,9 @@ MASTER_PATH = f"{GOLD_PATH}/master_table.parquet"
 pd.set_option("display.max_columns", 200)
 pd.set_option("display.width", 200)
 
-#Load Master data
+# 1. LOAD DATA
+# ------------
+print(f"Loading Master Table from {MASTER_PATH}...")
 master = pd.read_parquet(MASTER_PATH)
 
 print("Master Table Shape:", master.shape) 
@@ -19,7 +27,9 @@ print("Master Table Shape:", master.shape)
 # print(master.head())
 print(master.info())
 
-# EDA for Data Health Check =========================================
+# 2. DATA HEALTH CHECKS
+# ---------------------
+print("\n--- HEALTH CHECKS ---")
 
 # Duplicate Check
 print(master.duplicated().sum())
