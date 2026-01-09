@@ -1,5 +1,9 @@
 # F1 DATA COMPANION (CHATBOT)
 # GOAL: Interactive interface for querying F1 Insights & ML Predictions
+# LOGIC:
+#   1. Loads Gold Key Features and ML Model.
+#   2. Parses user natural language queries (Intent Recognition).
+#   3. Returns structured response data (for both Console and Web API).
 
 import pandas as pd
 import numpy as np
@@ -39,91 +43,92 @@ class F1Bot:
         matches = difflib.get_close_matches(name_query, self.drivers, n=1, cutoff=0.4)
         return matches[0] if matches else None
 
-    def handle_query(self, query):
+    def get_response(self, query):
+        """
+        Process query and return a structured dictionary response.
+        Format:
+        {
+            "text": "Human readable string",
+            "type": "text" | "table" | "kv_pairs",
+            "data": ... (raw data for frontend rendering)
+        }
+        """
         query = query.lower()
 
         # INTENT: EXIT
         if query in ["exit", "quit", "bye"]:
-            print("F1Bot: Goodbye! Enjoy the race.")
-            return False
+            return {"text": "Goodbye! Enjoy the race.", "type": "text"}
 
-        
-        # INTENT: CONSISTENCY LEADERBOARD (Check BEFORE driver name to avoid "consistent" -> "Sargeant" mismatch)
+        # INTENT: CONSISTENCY LEADERBOARD
         if "consistency" in query or "consistent" in query:
-            self.response_consistency()
-            return True
+            return self.response_consistency()
             
         # INTENT: RELIABILITY / CRASHES
         if "reliability" in query or "crash" in query or "dnf" in query:
-            self.response_reliability()
-            return True
+            return self.response_reliability()
             
         # INTENT: WIN RATE
         if "win" in query or "winner" in query:
-            self.response_winners()
-            return True
+            return self.response_winners()
 
         # INTENT: DRIVER STATS / PREDICTION
-        # Logic: Check if a driver name is mentioned
         found_driver = None
         for driver in self.drivers:
-            # Check full name or last name
             if driver.lower() in query or (len(query.split()) > 1 and driver.split()[-1].lower() in query):
                 found_driver = driver
                 break
         
-        # If not direct match, try fuzzy logic on LAST WORD only if query is short
         if not found_driver:
-            # heuristic: Only try fuzzy match if query length is small (likely just a name)
-            # or explicitly asks "stats for [name]"
             words = query.split()
-            potential_name = words[-1]
-            # Increase cutoff to 0.6 to be safer
-            matches = difflib.get_close_matches(potential_name, self.drivers, n=1, cutoff=0.6)
-            if matches:
-                 found_driver = matches[0]
+            if words:
+                potential_name = words[-1]
+                matches = difflib.get_close_matches(potential_name, self.drivers, n=1, cutoff=0.6)
+                if matches:
+                     found_driver = matches[0]
 
         if "predict" in query and found_driver:
-            self.response_predict_driver(found_driver)
-            return True
+            return self.response_predict_driver(found_driver)
         
         if found_driver and ("stats" in query or "how is" in query or "who is" in query):
-            self.response_driver_stats(found_driver)
-            return True
-
-
+            return self.response_driver_stats(found_driver)
 
         # FALLBACK
-        print("F1Bot: I didn't quite catch that. Try asking about:")
-        print("       - 'Who is the most consistent?'")
-        print("       - 'Stats for [Driver Name]'")
-        print("       - 'Predict position for [Driver Name]'")
-        return True
+        fallback_msg = (
+            "I didn't quite catch that. Try asking about:\n"
+            "- 'Who is the most consistent?'\n"
+            "- 'Stats for [Driver Name]'\n"
+            "- 'Predict position for [Driver Name]'"
+        )
+        return {"text": fallback_msg, "type": "text"}
 
     def response_driver_stats(self, driver):
         stats = self.current_season[self.current_season["driver_name"] == driver].iloc[-1]
-        print(f"\n--- Stats for {driver} (Round {stats['race_round']}) ---")
-        print(f"Current Form (Last 5 Avg): {stats['rolling_avg_5_races']:.1f}")
-        print(f"Season Win Rate: {stats['season_win_rate']*100:.1f}%")
-        print(f" consistency Score: {stats['consistency_score_std']:.2f} (Lower is better)")
-        print(f"Points per Race: {stats['points_per_race']:.1f}")
+        
+        data = {
+            "Driver": driver,
+            "Current Form (Last 5 Avg)": f"{stats['rolling_avg_5_races']:.1f}",
+            "Season Win Rate": f"{stats['season_win_rate']*100:.1f}%",
+            "Consistency Score": f"{stats['consistency_score_std']:.2f} (Low is good)",
+            "Points per Race": f"{stats['points_per_race']:.1f}"
+        }
+        
+        msg = f"Stats for {driver} (Round {stats['race_round']}):\n"
+        for k, v in data.items():
+            msg += f"- {k}: {v}\n"
+            
+        return {
+            "text": msg,
+            "type": "kv_pairs",
+            "data": data
+        }
 
     def response_predict_driver(self, driver):
         if not self.model:
-            print("F1Bot: Prediction model is unavailable.")
-            return
+            return {"text": "Prediction model is unavailable.", "type": "error"}
 
-        # Get latest known features for driver
         latest_data = self.current_season[self.current_season["driver_name"] == driver].iloc[-1:]
         
-        # MOCK INPUT for Next Race:
-        # We assume the user wants to predict the 'next' potential result based on current form.
-        # Ideally, we would ask user for 'Qualifying Position' input, but for now we auto-fill 
-        # with their average qualifying or last qualifying.
-        # Let's use their *last* qualifying position as the estimate.
-        
         try:
-            # Must match feature columns from ml_baseline_7
             features_needed = [
                 "qualifying_position", 
                 "rolling_avg_5_races", 
@@ -136,27 +141,58 @@ class F1Bot:
             
             X_input = latest_data[features_needed]
             pred_pos = self.model.predict(X_input)[0]
+            qual_pos = int(X_input['qualifying_position'].values[0])
             
-            print(f"\n--- AI Prediction for {driver} ---")
-            print(f"Based on current form & Qualifying P{int(X_input['qualifying_position'].values[0])}")
-            print(f"Predicted Finish: P{int(round(pred_pos))} (Exact: {pred_pos:.2f})")
+            msg = (
+                f"AI Prediction for {driver}:\n"
+                f"Based on current form & Qualifying P{qual_pos}\n"
+                f"Predicted Finish: P{int(round(pred_pos))} (Exact: {pred_pos:.2f})"
+            )
+            
+            return {
+                "text": msg,
+                "type": "prediction",
+                "data": {
+                    "driver": driver,
+                    "predicted_position": round(pred_pos, 2),
+                    "qualifying_used": qual_pos
+                }
+            }
         except Exception as e:
-            print(f"F1Bot: Couldn't generate prediction. Data mismatch? ({e})")
+            return {"text": f"Couldn't generate prediction. Data mismatch? ({e})", "type": "error"}
 
     def response_consistency(self):
-        print("\n--- Consistency Leaderboard ---")
         ranking = self.current_season.groupby("driver_name")["consistency_score_std"].mean().sort_values()
-        print(ranking.head(5))
+        top_5 = ranking.head(5)
+        
+        msg = "Consistency Leaderboard (Lower Std Dev is better):\n" + top_5.to_string()
+        return {
+            "text": msg,
+            "type": "table",
+            "data": top_5.to_dict()
+        }
         
     def response_reliability(self):
-        print("\n--- Most Unreliable (High Instability Score) ---")
         ranking = self.current_season.groupby("driver_name")["rolling_instability_score"].mean().sort_values(ascending=False)
-        print(ranking.head(5))
+        top_5 = ranking.head(5)
+        
+        msg = "Most Unreliable (High Instability Score):\n" + top_5.to_string()
+        return {
+            "text": msg,
+            "type": "table",
+            "data": top_5.to_dict()
+        }
 
     def response_winners(self):
-        print("\n--- Win Rate Leaders ---")
         ranking = self.current_season.groupby("driver_name")["season_win_rate"].last().sort_values(ascending=False)
-        print(ranking[ranking > 0])
+        leaders = ranking[ranking > 0]
+        
+        msg = "Win Rate Leaders:\n" + leaders.to_string()
+        return {
+            "text": msg,
+            "type": "table",
+            "data": leaders.to_dict()
+        }
 
 def main():
     bot = F1Bot()
@@ -166,7 +202,13 @@ def main():
     active = True
     while active:
         user_input = input("\nYou: ")
-        active = bot.handle_query(user_input)
+        response = bot.get_response(user_input)
+        
+        # Console Renderer
+        print(f"F1Bot: {response['text']}")
+        
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            active = False
 
 if __name__ == "__main__":
     main()

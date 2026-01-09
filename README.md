@@ -3,6 +3,8 @@
 A comprehensive Data Engineering & Machine Learning project analyzing the 2024 Formula 1 Season.
 This project implements a "Lakehouse" architecture (Bronze/Silver/Gold layers) to process raw data, engineer advanced features, and deploy a predictive Machine Learning model accessible via an interactive Chatbot.
 
+[Datasets from Kaggle](https://www.kaggle.com/datasets/vshreekamalesh/comprehensive-formula-1-dataset-2020-2025)
+
 ---
 
 ## 🏗️ Project Architecture & Workflow
@@ -87,11 +89,25 @@ An interactive console agent that answers questions about the 2024 season.
     ```
     *(Generates Features, Plots, and Trains ML Model)*
 
-3.  **Talk to the Bot**:
+3.  **Talk to the Bot (Console)**:
     ```bash
     python scripts/data_bot_8.py
     ```
-    *(Ask questions and get predictions)*
+
+4.  **Launch the Dynamic Website**:
+    *   **Terminal 1 (Backend API)**:
+        ```bash
+        .\.venv\Scripts\python.exe -m uvicorn scripts.api:app --reload
+        ```
+        **OR in the activated virtual environment**:
+        ```bash
+        uvicorn scripts.api:app --reload
+        ```
+    *   **Terminal 2 (Frontend Server)**:
+        ```bash
+        python -m http.server -d web 5500
+        ```
+    *   **Visit**: `http://localhost:5500` in your browser.
 
 ---
 
