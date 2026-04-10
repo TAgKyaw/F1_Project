@@ -1,7 +1,7 @@
 # Formula 1 Dynamics Analysis: End-to-End MLOps Project
 
 A comprehensive Data Engineering & Machine Learning project analyzing the 2024 Formula 1 Season.
-This project implements a "Lakehouse" architecture (Bronze/Silver/Gold layers) to process raw data, engineer advanced features, and deploy a predictive Machine Learning model accessible via an interactive Chatbot.
+This project implements a Medallion Architecture (Bronze/Silver/Gold layers) to process raw data, engineer advanced features, and deploy a predictive Machine Learning model accessible via an interactive Chatbot.
 
 [Datasets from Kaggle](https://www.kaggle.com/datasets/vshreekamalesh/comprehensive-formula-1-dataset-2020-2025)
 
